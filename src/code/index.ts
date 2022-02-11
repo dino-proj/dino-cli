@@ -11,26 +11,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import chalk from 'chalk'
 import fs from 'fs'
 import { isNil } from 'lodash-es'
+import pc from 'picocolors'
 
 import { checkConfig } from '../utils'
 import { codeGenSpring } from './codeGen'
 
-
-
-const code = (type:string, files:string[], force:boolean=false) => {
-  console.log(chalk.cyan('start gen'),chalk.green(type), 'code...')
+const code = (type: string, files: string[], force: boolean = false) => {
+  console.log(pc.cyan('start gen'), pc.green(type), 'code...')
 
   const proj = checkConfig(process.cwd())
   if (isNil(proj)) {
-    console.log(chalk.red('Exit'))
+    console.log(pc.red('Exit'))
     process.exit(1)
   }
-    files.forEach((moduleFile) => {
-      codeGenSpring(proj, JSON.parse( fs.readFileSync(moduleFile).toString()), force)
-   })
+  files.forEach((moduleFile) => {
+    codeGenSpring(proj, JSON.parse(fs.readFileSync(moduleFile).toString()), force)
+  })
 }
 
 export default code

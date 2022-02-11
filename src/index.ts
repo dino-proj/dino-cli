@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import chalk from 'chalk'
 import { Argument, program } from 'commander'
+import pc from 'picocolors'
 
 import agent from './agent'
 import code from './code'
@@ -43,7 +43,7 @@ program //
 // output help information on unknown commands
 program.on('command:*', ([cmd]) => {
   program.outputHelp()
-  console.log(`  ` + chalk.red(`Unknown command ${chalk.yellow(cmd)}.`))
+  console.log(`  ` + pc.red(`Unknown command ${pc.yellow(cmd)}.`))
   console.log()
   process.exitCode = 1
 })

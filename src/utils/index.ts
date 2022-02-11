@@ -11,21 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import chalk from 'chalk'
 import { execSync } from 'child_process'
 import { execa } from 'execa'
 import fs from 'fs'
 import open from 'open'
 import path from 'path'
+import pc from 'picocolors'
 
 import { ProjectConfig } from '../types'
+
 
 
 
 export const checkConfig = (dir: string = './'): ProjectConfig =>{
   const filePath = path.join(dir, '.dino-proj.json')
   if (!fs.existsSync(filePath)) {
-    console.log(chalk.redBright('Error: ') + '.dino-proj.json not found')
+    console.log(pc.red('Error: ') + '.dino-proj.json not found')
     return undefined
   }
   try {
@@ -40,7 +41,7 @@ export const checkConfig = (dir: string = './'): ProjectConfig =>{
       tablePrefix: configFile.tablePrefix ?? 't',
     }
   } catch (e) {
-    console.log(chalk.redBright('Error: ') + '.dino-proj.json has error ' + chalk.red(e.message))
+    console.log(pc.red('Error: ') , '.dino-proj.json has error ' , pc.red(e.message))
   }
 }
 
@@ -80,8 +81,8 @@ function executeNodeScript(scriptPath, url) {
   child.on('close', (code) => {
     if (code !== 0) {
       console.log()
-      console.log(chalk.red('The script specified as BROWSER environment variable failed.'))
-      console.log(chalk.cyan(scriptPath) + ' exited with code ' + code + '.')
+      console.log(pc.red('The script specified as BROWSER environment variable failed.'))
+      console.log(pc.cyan(scriptPath), ' exited with code ' + code + '.')
       console.log()
     }
   })

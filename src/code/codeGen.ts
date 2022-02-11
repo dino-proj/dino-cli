@@ -31,11 +31,12 @@ import {
   trimStart,
 } from 'lodash-es'
 import path from 'path'
+import pc from 'picocolors'
 import Template7 from 'template7'
+import yesno from 'yesno'
 
 import { ClassTypes, defaultBase, ModuleCodeSchema, ModuleSchema, ProjectConfig } from '../types'
 
-//import inquirer from 'inquirer'
 type Render = (ctx: Record<string, any>) => string
 
 const loadTemplate = (templName: string): Map<string, Render> => {
@@ -43,9 +44,10 @@ const loadTemplate = (templName: string): Map<string, Render> => {
   const templMap = new Map<string, Render>()
   const templeFiles = fs.readdirSync(tmplDir).filter((name) => endsWith(name, '.tmpl'))
   templeFiles.forEach((templ) => {
-    console.log('  Load template:', templ)
+    console.log('  Load template:', pc.green(templ))
     templMap.set(trimEnd(templ, '.tmpl'), Template7.compile(fs.readFileSync(path.join(tmplDir, templ)).toString()))
   })
+  console.log(pc.bold(pc.green(templMap.size)), 'template(s) loaded!\n')
   return templMap
 }
 const javaPrimerys = new Set(['Boolean', 'boolean', 'Double', 'double', 'Float', 'float', 'Integer', 'int', 'Long', 'long', 'Short', 'short', 'String'])
@@ -88,7 +90,7 @@ const asArray = <T>(val: T | T[]): T[] => {
 const genClassName = (name: string, clzz: Record<ClassTypes, string>): string => {
   name = trim(trimStart(name, '-'))
   if (endsWith(name, '>')) {
-    return name.replaceAll( /\$([a-zA-Z])+/g, (arg: string): string => {
+    return name.replaceAll(/\$([a-zA-Z])+/g, (arg: string): string => {
       arg = trimStart(arg, '$')
       if (has(clzz, arg)) {
         return get(clzz, arg)
@@ -134,7 +136,7 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
   const templMap = loadTemplate('templ')
 
   asArray(module).forEach((mod) => {
-    console.log('Module: ' + mod.name)
+    console.log(pc.bold(pc.green('Module: ')), pc.green(mod.name))
     const packagePath = path.join(config.srcPath, ...config.package.split('.'), ...config.modulesPackage?.split('.'), lowerCase(mod.name))
     if (!fs.existsSync(packagePath)) {
       fs.mkdirSync(packagePath, { recursive: true })
@@ -148,29 +150,25 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
         context: {
           now: dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
           clazz: { key: mod.key, ...getClassNames(mod.name) },
-        }
+        },
       })
-/*
+
       if (!force && fs.existsSync(file)) {
-        inquirer
-          .prompt([
-            {
-              type: 'confirm',
-              name: 'choice',
-              message: `${capitalize(mod.name)}${capitalize(key)}.java exists, Overwrite?`,
-              default: false,
-            },
-          ])
-          .then((answers) => {
-            if (answers.choice) {
-              fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-              console.log(`  Gen: ${capitalize(key)}`, 'into', file)
-            }
-          })
-      } else {*/
+        yesno({
+          question: pc.bold(`  ${capitalize(mod.name)}${capitalize(key)}.java exists, ${pc.red('Overwrite?')}`),
+          defaultValue: false,
+        }).then((yes) => {
+          if (yes) {
+            fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
+            console.log(pc.green(`  Gen: ${capitalize(key)}`), 'into', pc.cyan(file))
+          } else {
+            console.log(pc.yellow(`  Skip: ${capitalize(key)}`), 'exists', pc.cyan(`${capitalize(mod.name)}${capitalize(key)}.java`))
+          }
+        })
+      } else {
         fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-        console.log(`  Gen: ${capitalize(key)}`, 'into', file)
-      //}
+        console.log(pc.green(`  Gen: ${capitalize(key)}`), 'into', pc.cyan(file))
+      }
     })
   })
   return true
