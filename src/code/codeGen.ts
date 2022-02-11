@@ -15,7 +15,6 @@ import dayjs from 'dayjs'
 import fs from 'fs'
 import {
   camelCase,
-  capitalize,
   endsWith,
   extend,
   get,
@@ -29,6 +28,7 @@ import {
   trim,
   trimEnd,
   trimStart,
+  upperFirst,
 } from 'lodash-es'
 import path from 'path'
 import pc from 'picocolors'
@@ -52,7 +52,7 @@ const loadTemplate = (templName: string): Map<string, Render> => {
 }
 const javaPrimerys = new Set(['Boolean', 'boolean', 'Double', 'double', 'Float', 'float', 'Integer', 'int', 'Long', 'long', 'Short', 'short', 'String'])
 const initTeplateEngine = () => {
-  Template7.registerHelper('cap', capitalize)
+  Template7.registerHelper('cap', upperFirst)
   Template7.registerHelper('snake', snakeCase)
   Template7.registerHelper('camel', camelCase)
   Template7.registerHelper('colDef', (propType: string) => {
@@ -101,7 +101,7 @@ const genClassName = (name: string, clzz: Record<ClassTypes, string>): string =>
 }
 
 const getClassNames = (mod: string): Record<ClassTypes, string> => {
-  mod = capitalize(mod)
+  mod = camelCase(mod)
   return {
     entity: `${mod}Entity`,
     vo: `${mod}Vo`,
@@ -143,7 +143,7 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
     }
 
     templMap.forEach((value, key) => {
-      const file = path.join(packagePath, `${capitalize(mod.name)}${capitalize(key)}.java`)
+      const file = path.join(packagePath, `${camelCase(mod.name)}${camelCase(key)}.java`)
       const code = value({
         config,
         schema: genSchema(mod),
@@ -155,19 +155,19 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
 
       if (!force && fs.existsSync(file)) {
         yesno({
-          question: pc.bold(`  ${capitalize(mod.name)}${capitalize(key)}.java exists, ${pc.red('Overwrite?')}`),
+          question: pc.bold(`  ${camelCase(mod.name)}${camelCase(key)}.java exists, ${pc.red('Overwrite?')}`),
           defaultValue: false,
         }).then((yes) => {
           if (yes) {
             fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-            console.log(pc.green(`  Gen: ${capitalize(key)}`), 'into', pc.cyan(file))
+            console.log(pc.green(`  Gen: ${camelCase(key)}`), 'into', pc.cyan(file))
           } else {
-            console.log(pc.yellow(`  Skip: ${capitalize(key)}`), 'exists', pc.cyan(`${capitalize(mod.name)}${capitalize(key)}.java`))
+            console.log(pc.yellow(`  Skip: ${camelCase(key)}`), 'exists', pc.cyan(`${camelCase(mod.name)}${camelCase(key)}.java`))
           }
         })
       } else {
         fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-        console.log(pc.green(`  Gen: ${capitalize(key)}`), 'into', pc.cyan(file))
+        console.log(pc.green(`  Gen: ${camelCase(key)}`), 'into', pc.cyan(file))
       }
     })
   })
