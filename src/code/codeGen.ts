@@ -22,7 +22,6 @@ import {
   isArray,
   isNil,
   join,
-  lowerCase,
   snakeCase,
   startsWith,
   trim,
@@ -55,6 +54,7 @@ const initTeplateEngine = () => {
   Template7.registerHelper('cap', upperFirst)
   Template7.registerHelper('snake', snakeCase)
   Template7.registerHelper('camel', camelCase)
+  Template7.registerHelper('lower', (str:string) => (isNil(str) ? str : str.toLowerCase()))
   Template7.registerHelper('colDef', (propType: string) => {
     if (javaPrimerys.has(propType)) {
       return ''
@@ -101,7 +101,7 @@ const genClassName = (name: string, clzz: Record<ClassTypes, string>): string =>
 }
 
 const getClassNames = (mod: string): Record<ClassTypes, string> => {
-  mod = camelCase(mod)
+  mod = upperFirst(mod)
   return {
     entity: `${mod}Entity`,
     vo: `${mod}Vo`,
@@ -137,13 +137,13 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
 
   asArray(module).forEach((mod) => {
     console.log(pc.bold(pc.green('Module: ')), pc.green(mod.name))
-    const packagePath = path.join(config.srcPath, ...config.package.split('.'), ...config.modulesPackage?.split('.'), lowerCase(mod.name))
+    const packagePath = path.join(config.srcPath, ...config.package.split('.'), ...config.modulesPackage?.split('.'), mod.name.toLowerCase())
     if (!fs.existsSync(packagePath)) {
       fs.mkdirSync(packagePath, { recursive: true })
     }
 
     templMap.forEach((value, key) => {
-      const file = path.join(packagePath, `${camelCase(mod.name)}${camelCase(key)}.java`)
+      const file = path.join(packagePath, `${upperFirst(mod.name)}${upperFirst(key)}.java`)
       const code = value({
         config,
         schema: genSchema(mod),
@@ -155,19 +155,19 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
 
       if (!force && fs.existsSync(file)) {
         yesno({
-          question: pc.bold(`  ${camelCase(mod.name)}${camelCase(key)}.java exists, ${pc.red('Overwrite?')}`),
+          question: pc.bold(`  ${upperFirst(mod.name)}${upperFirst(key)}.java exists, ${pc.red('Overwrite?')}`),
           defaultValue: false,
         }).then((yes) => {
           if (yes) {
             fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-            console.log(pc.green(`  Gen: ${camelCase(key)}`), 'into', pc.cyan(file))
+            console.log(pc.green(`  Gen: ${upperFirst(key)}`), 'into', pc.cyan(file))
           } else {
-            console.log(pc.yellow(`  Skip: ${camelCase(key)}`), 'exists', pc.cyan(`${camelCase(mod.name)}${camelCase(key)}.java`))
+            console.log(pc.yellow(`  Skip: ${upperFirst(key)}`), 'exists', pc.cyan(`${upperFirst(mod.name)}${upperFirst(key)}.java`))
           }
         })
       } else {
         fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-        console.log(pc.green(`  Gen: ${camelCase(key)}`), 'into', pc.cyan(file))
+        console.log(pc.green(`  Gen: ${upperFirst(key)}`), 'into', pc.cyan(file))
       }
     })
   })
