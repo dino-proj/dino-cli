@@ -1,6 +1,6 @@
 {
   "name": "@dino-dev/cli",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "dino dev cloud cli",
   "license": "Apache-2.0",
   "author": {
@@ -15,7 +15,6 @@
     "bin"
   ],
   "scripts": {
-    "dev": "node .electron-vite/dev-runner.js",
     "clean": "rimraf lib bin",
     "build": "yarn run clean && yarn run bundle",
     "bundle": "rollup -c && tsc"
@@ -26,12 +25,15 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "commander": "^9.0.0",
+    "commander-completion": "^1.0.1",
     "dayjs": "^1.10.7",
     "execa": "^6.0.0",
     "lodash-es": "^4.17.21",
     "minimist": "^1.2.5",
     "open": "^8.4.0",
     "picocolors": "^1.0.0",
+    "semver": "^7.3.7",
+    "simple-git": "^3.2.4",
     "template7": "^1.4.2",
     "yesno": "^0.3.1"
   },
