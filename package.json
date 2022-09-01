@@ -1,6 +1,6 @@
 {
   "name": "@dino-dev/cli",
-  "version": "1.2.9",
+  "version": "1.2.11",
   "description": "dino dev cloud cli",
   "license": "Apache-2.0",
   "author": {
@@ -17,7 +17,8 @@
   "scripts": {
     "clean": "rimraf lib bin",
     "build": "yarn run clean && yarn run bundle",
-    "bundle": "rollup -c && tsc"
+    "bundle": "rollup -c && tsc",
+    "pub": "yarn build && yarn --patch publish"
   },
   "publishConfig": {
     "access": "public"
