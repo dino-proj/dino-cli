@@ -1,6 +1,6 @@
 {
   "name": "@dino-dev/cli",
-  "version": "1.2.11",
+  "version": "1.2.12",
   "description": "dino dev cloud cli",
   "license": "Apache-2.0",
   "author": {
@@ -24,6 +24,7 @@
     "access": "public"
   },
   "dependencies": {
+    "blend-promise-utils": "^1.29.0",
     "child_process": "^1.0.2",
     "commander": "^9.0.0",
     "commander-completion": "^1.0.1",
