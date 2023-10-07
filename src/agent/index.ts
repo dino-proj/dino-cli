@@ -11,15 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import chalk from 'chalk'
+import pc from 'picocolors'
 
 import { openBrowser } from '../utils'
 
-
 const agent = () => {
-  console.log(chalk.cyanBright('starting dino agent...'))
+  console.log(pc.cyan('starting dino agent...'))
 
-    openBrowser('https://www.baidu.com')
+  openBrowser('https://dinodev.cloud/ui')
 }
 
 export default agent
