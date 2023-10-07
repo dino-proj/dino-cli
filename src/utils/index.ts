@@ -20,28 +20,32 @@ import pc from 'picocolors'
 
 import { ProjectConfig } from '../types'
 
+const defaultTemplNames = {
+  spring: 'dino-spring',
+  vue: 'dino-vue',
+}
 
-
-
-export const checkConfig = (dir: string = './'): ProjectConfig =>{
-  const filePath = path.join(dir, '.dino-proj.json')
+export const loadProjConfig = (confDir: string = './'): ProjectConfig => {
+  const filePath = path.join(confDir, '.dino-proj.json')
   if (!fs.existsSync(filePath)) {
-    console.log(pc.red('Error: ') + '.dino-proj.json not found')
+    console.log(pc.red('Error: ') + '.dino-proj.json not found in conf directory[' + confDir + ']')
     return undefined
   }
   try {
-    var configFile = JSON.parse(fs.readFileSync(filePath).toString()) as ProjectConfig
+    const configFile = JSON.parse(fs.readFileSync(filePath).toString()) as ProjectConfig
     return {
       name: configFile.name,
+      type: configFile.type,
       srcPath: configFile.srcPath ?? path.join('src', 'main', 'java'),
       package: configFile.package,
       author: configFile.author,
       modulesPackage: configFile.modulesPackage ?? 'modules',
+      templateName: configFile['template-name'] || configFile['templateName'] || defaultTemplNames[configFile.type],
       sysPackage: configFile.sysPackage ?? 'sys',
       tablePrefix: configFile.tablePrefix ?? 't',
     }
   } catch (e) {
-    console.log(pc.red('Error: ') , '.dino-proj.json has error ' , pc.red(e.message))
+    console.log(pc.red('Error: '), '.dino-proj.json has error ', pc.red(e.message))
   }
 }
 
@@ -59,7 +63,7 @@ function getBrowserEnv() {
   // It is specific to the operating system.
   // See https://github.com/sindresorhus/open#app for documentation.
   const value = process.env.BROWSER
-  let action
+  let action: number
   if (!value) {
     // Default.
     action = Actions.BROWSER
@@ -73,7 +77,7 @@ function getBrowserEnv() {
   return { action, value }
 }
 
-function executeNodeScript(scriptPath, url) {
+function executeNodeScript(scriptPath: string, url: string): boolean {
   const extraArgs = process.argv.slice(2)
   const child = execa('node', [scriptPath, ...extraArgs, url], {
     stdio: 'inherit',
@@ -89,7 +93,7 @@ function executeNodeScript(scriptPath, url) {
   return true
 }
 
-function startBrowserProcess(browser, url) {
+function startBrowserProcess(browser: string, url: string): boolean {
   // If we're on OS X, the user hasn't specifically
   // requested a different browser, we can try opening
   // Chrome with AppleScript. This lets us reuse an
@@ -108,6 +112,7 @@ function startBrowserProcess(browser, url) {
       return true
     } catch (err) {
       // Ignore errors.
+      // continue regardless of error
     }
   }
 
@@ -121,17 +126,16 @@ function startBrowserProcess(browser, url) {
 
   // Fallback to open
   // (It will always open new tab)
-    const options = { app: { name: browser }, url: true }
-    open(url, options).catch(() => {}) // Prevent `unhandledRejection` error.
-    return true
-
+  const options = { app: { name: browser }, url: true }
+  open(url, options).catch(() => {}) // Prevent `unhandledRejection` error.
+  return true
 }
 
 /**
  * Reads the BROWSER environment variable and decides what to do with it. Returns
  * true if it opened a browser or ran a node.js script, otherwise false.
  */
-export const openBrowser = (url) => {
+export const openBrowser = (url: string): boolean => {
   const { action, value } = getBrowserEnv()
   switch (action) {
     case Actions.NONE:

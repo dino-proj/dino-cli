@@ -15,12 +15,14 @@
 export interface ProjectConfig {
   name: string
   srcPath: string
+  type: 'spring' | 'vue'
   author?: {
     name: string
     email?: string
   }
   tablePrefix?: string
   package: string
+  templateName: string
   modulesPackage?: string
   sysPackage?: string
 }
@@ -36,9 +38,10 @@ export interface Prop {
   vo?: boolean
   req?: boolean
   search?: 'eq' | 'like' | 'in'
+  imports?: string[]
 }
 
-export type ClassTypes = 'entity' | 'vo' | 'service' | 'dao' | 'req' | 'controller'|'search'
+export type ClassTypes = 'entity' | 'vo' | 'service' | 'dao' | 'req' | 'controller' | 'search'
 type BaseType = Record<ClassTypes, string | string[]>
 export const defaultBase: BaseType = {
   entity: 'EntityBase<$key>',
@@ -47,17 +50,18 @@ export const defaultBase: BaseType = {
   dao: 'CrudRepositoryBase<$entity, $key>',
   controller: '-CrudControllerBase<$service, $entity, $vo, $search, $req, $key>',
   search: '-CustomQuery',
-  req:''
+  req: '',
 }
 
 export interface ModuleSchema {
   name: string
+  package?: string
   type: 'domain' | 'record'
   title: string
   key: 'Long' | 'String'
   tenantable?: boolean
   logicalDelete?: boolean
-  base?:BaseType
+  base?: BaseType
   props: Prop[]
 }
 
@@ -68,4 +72,22 @@ export type ModuleCodeSchema = ModuleSchema & {
   voProps: Prop[]
   searchProps: Prop[]
   reqProps: Prop[]
+}
+
+export interface ClassDef {
+  type: 'interface' | 'enum' | 'class'
+  name: string
+  package: string
+  imports?: string | string[]
+  dependencies?: string | string[]
+}
+export interface FrameConfig {
+  name: string
+  version: string
+  description: string
+  author: string
+  classDefs: ClassDef[]
+  baseClass: {
+    [key in ClassTypes]?: string[]
+  }
 }
