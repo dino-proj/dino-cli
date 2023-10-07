@@ -11,50 +11,36 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import promiseUtils from 'blend-promise-utils'
 import dayjs from 'dayjs'
 import fs from 'fs'
-import {
-  camelCase,
-  endsWith,
-  extend,
-  get,
-  has,
-  isArray,
-  isNil,
-  join,
-  snakeCase,
-  startsWith,
-  trim,
-  trimEnd,
-  trimStart,
-  upperFirst,
-} from 'lodash-es'
+import { camelCase, endsWith, extend, get, has, isArray, isEmpty, isNil, join, snakeCase, startsWith, trim, trimStart, upperFirst } from 'lodash-es'
 import path from 'path'
 import pc from 'picocolors'
 import Template7 from 'template7'
 import yesno from 'yesno'
 
-import { ClassTypes, defaultBase, ModuleCodeSchema, ModuleSchema, ProjectConfig } from '../types'
+import { ClassTypes, defaultBase, ModuleCodeSchema, ModuleSchema, ProjectConfig, Prop } from '../types'
 
 type Render = (ctx: Record<string, any>) => string
 
-const loadTemplate = (templName: string): Map<string, Render> => {
-  const tmplDir = path.join(process.cwd(), templName)
-  const templMap = new Map<string, Render>()
+const loadTemplate = (workdir: string, templName: string): Array<{ name: string; render: Render }> => {
+  const tmplDir = path.join(workdir, templName)
+  const templMap = []
   const templeFiles = fs.readdirSync(tmplDir).filter((name) => endsWith(name, '.tmpl'))
   templeFiles.forEach((templ) => {
     console.log('  Load template:', pc.green(templ))
-    templMap.set(trimEnd(templ, '.tmpl'), Template7.compile(fs.readFileSync(path.join(tmplDir, templ)).toString()))
+    templMap.push({ name: templ.substring(0, templ.length - 5), render: Template7.compile(fs.readFileSync(path.join(tmplDir, templ)).toString()) })
   })
-  console.log(pc.bold(pc.green(templMap.size)), 'template(s) loaded!\n')
+  console.log(pc.bold(pc.green(templMap.length)), 'template(s) loaded!\n')
   return templMap
 }
-const javaPrimerys = new Set(['Boolean', 'boolean', 'Double', 'double', 'Float', 'float', 'Integer', 'int', 'Long', 'long', 'Short', 'short', 'String'])
+const javaPrimerys = new Set(['Boolean', 'boolean', 'Double', 'double', 'Float', 'float', 'Integer', 'int', 'Long', 'long', 'Short', 'short', 'String', 'Date'])
 const initTeplateEngine = () => {
   Template7.registerHelper('cap', upperFirst)
   Template7.registerHelper('snake', snakeCase)
   Template7.registerHelper('camel', camelCase)
-  Template7.registerHelper('lower', (str:string) => (isNil(str) ? str : str.toLowerCase()))
+  Template7.registerHelper('lower', (str: string) => (isNil(str) ? str : str.toLowerCase()))
   Template7.registerHelper('colDef', (propType: string) => {
     if (javaPrimerys.has(propType)) {
       return ''
@@ -74,6 +60,14 @@ const initTeplateEngine = () => {
       result = result + ` implements ${join(ifs, ', ')}`
     }
     return result
+  })
+
+  Template7.registerHelper('javaImport', (propsArr: Array<Prop[]>) => {
+    const props: Prop[] = propsArr.flat()
+    return props
+      .filter((p) => !isNil(p.imports))
+      .map((p) => `import ${p.imports[0]};`)
+      .join('\n')
   })
 }
 
@@ -113,6 +107,18 @@ const getClassNames = (mod: string): Record<ClassTypes, string> => {
   }
 }
 
+const dealProp = (config: ProjectConfig, prop: Prop) => {
+  if (prop.type.indexOf('.') > 0) {
+    let importClass = prop.type.indexOf('<') > 0 ? prop.type.substring(0, prop.type.indexOf('<')) : prop.type
+
+    if (importClass.startsWith('@')) {
+      importClass = config.package + '.' + config.modulesPackage + '.' + importClass.substring(1)
+    }
+    prop.imports = [importClass]
+    prop.type = prop.type.substring(prop.type.lastIndexOf('.') + 1)
+  }
+}
+
 const genSchema = (mod: ModuleSchema): ModuleCodeSchema => {
   const searchProps = mod.props.filter((prop) => !isNil(prop.search))
   const voProps = mod.props.filter((prop) => prop.vo !== false)
@@ -131,20 +137,22 @@ const genSchema = (mod: ModuleSchema): ModuleCodeSchema => {
   }
 }
 
-export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | ModuleSchema[], force: boolean = false): boolean => {
+export const codeGenSpring = (confDir: string, config: ProjectConfig, module: ModuleSchema | ModuleSchema[], force: boolean = false): boolean => {
   initTeplateEngine()
-  const templMap = loadTemplate('templ')
+  const templMap = loadTemplate(confDir, config.templateName)
 
   asArray(module).forEach((mod) => {
+    mod.props.forEach((p) => dealProp(config, p))
     console.log(pc.bold(pc.green('Module: ')), pc.green(mod.name))
-    const packagePath = path.join(config.srcPath, ...config.package.split('.'), ...config.modulesPackage?.split('.'), mod.name.toLowerCase())
+    const paths = [config.srcPath, ...config.package.split('.'), ...(config.modulesPackage || '').split('.'), mod.name.toLowerCase()]
+    const packagePath = path.join(...paths.filter((p) => !isEmpty(p)))
     if (!fs.existsSync(packagePath)) {
       fs.mkdirSync(packagePath, { recursive: true })
     }
 
-    templMap.forEach((value, key) => {
-      const file = path.join(packagePath, `${upperFirst(mod.name)}${upperFirst(key)}.java`)
-      const code = value({
+    promiseUtils.mapSeries(templMap, async (templ) => {
+      const file = path.join(packagePath, `${upperFirst(mod.name)}${upperFirst(templ.name)}.java`)
+      const code = templ.render({
         config,
         schema: genSchema(mod),
         context: {
@@ -153,23 +161,26 @@ export const codeGenSpring = (config: ProjectConfig, module: ModuleSchema | Modu
         },
       })
 
-      if (!force && fs.existsSync(file)) {
-        yesno({
-          question: pc.bold(`  ${upperFirst(mod.name)}${upperFirst(key)}.java exists, ${pc.red('Overwrite?')}`),
-          defaultValue: false,
-        }).then((yes) => {
-          if (yes) {
-            fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-            console.log(pc.green(`  Gen: ${upperFirst(key)}`), 'into', pc.cyan(file))
-          } else {
-            console.log(pc.yellow(`  Skip: ${upperFirst(key)}`), 'exists', pc.cyan(`${upperFirst(mod.name)}${upperFirst(key)}.java`))
-          }
-        })
-      } else {
-        fs.writeFileSync(file, code, { encoding: 'utf-8', flag: 'w' })
-        console.log(pc.green(`  Gen: ${upperFirst(key)}`), 'into', pc.cyan(file))
-      }
+      await writeCode(mod.name, templ.name, code, file, force)
     })
   })
   return true
+}
+
+const writeCode = async (modName: string, templateName: string, code: string, filePath: string, force: boolean) => {
+  if (!force && fs.existsSync(filePath)) {
+    const yes = await yesno({
+      question: pc.bold(`  ${upperFirst(modName)}${upperFirst(templateName)}.java exists, ${pc.red('Overwrite?')}`),
+      defaultValue: false,
+    })
+    if (yes) {
+      fs.writeFileSync(filePath, code, { encoding: 'utf-8', flag: 'w' })
+      console.log(pc.green(`  Gen: ${upperFirst(templateName)}`), 'into', pc.cyan(filePath))
+    } else {
+      console.log(pc.yellow(`  Skip: ${upperFirst(templateName)}`), 'exists', pc.cyan(`${upperFirst(modName)}${upperFirst(templateName)}.java`))
+    }
+  } else {
+    fs.writeFileSync(filePath, code, { encoding: 'utf-8', flag: 'w' })
+    console.log(pc.green(`  Gen: ${upperFirst(templateName)}`), 'into', pc.cyan(filePath))
+  }
 }

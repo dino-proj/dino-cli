@@ -12,22 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import fs from 'fs'
-import { isNil } from 'lodash-es'
+import { endsWith, isNil } from 'lodash-es'
+import path from 'path'
 import pc from 'picocolors'
 
-import { checkConfig } from '../utils'
+import config from '@/utils/config'
+
+import { loadProjConfig } from '../utils'
 import { codeGenSpring } from './codeGen'
 
-const code = (type: string, files: string[], force: boolean = false) => {
-  console.log(pc.cyan('start gen'), pc.green(type), 'code...')
+const code = (moduleNames: string[], force: boolean = false) => {
+  const workDir = process.cwd()
+  const confDir = config.confDir(workDir)
+  const moduleDir = config.modulesDir(workDir)
 
-  const proj = checkConfig(process.cwd())
+  // check conf dir
+  if (!fs.existsSync(confDir)) {
+    console.log(pc.red('Error: ') + '.dino-dev directory not found in ' + workDir)
+    process.exit(1)
+  }
+
+  // check modules dir
+  if (!fs.existsSync(moduleDir)) {
+    console.log(pc.red('Error: ') + 'modules directory not found in ' + confDir)
+    process.exit(1)
+  }
+
+  const proj = loadProjConfig(confDir)
   if (isNil(proj)) {
     console.log(pc.red('Exit'))
     process.exit(1)
   }
-  files.forEach((moduleFile) => {
-    codeGenSpring(proj, JSON.parse(fs.readFileSync(moduleFile).toString()), force)
+
+  const moduleList = fs
+    .readdirSync(moduleDir)
+    .filter((p) => endsWith(p, '.json'))
+    .map((p) => p.substring(0, p.length - 5))
+
+  if (moduleNames.includes('*')) {
+    moduleNames = moduleList
+  } else {
+    moduleNames.forEach((m) => {
+      if (!moduleList.includes(m)) {
+        console.log(pc.red('Error: ') + 'module not found', pc.green(m), 'in', moduleList)
+        process.exit(1)
+      }
+    })
+  }
+
+  console.log(pc.cyan('start gen'), pc.green(proj.type), 'code with template', proj.templateName)
+
+  moduleNames.forEach((m) => {
+    codeGenSpring(confDir, proj, JSON.parse(fs.readFileSync(path.join(moduleDir, m + '.json')).toString()), force)
   })
 }
 
