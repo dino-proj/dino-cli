@@ -11,11 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Argument, program } from 'commander'
+import { program } from 'commander'
 import pc from 'picocolors'
 
 import agent from './agent'
 import code from './code'
+import { genProject } from './create'
 
 program //
   .name('dino') //
@@ -23,21 +24,32 @@ program //
   .usage('<command> [options]')
 
 program //
-  .command('agent') //
+  .command('cloud') //
   .description('start the agent and open the dino cloud ui') //
   .action(() => {
-    console.log('agent')
+    console.log('checking project config')
     agent()
   })
 
 program //
+  .command('create') //
+  .addArgument(program.createArgument('<what>', 'Project type spring|vue3').choices(['spring', 'vue3']))
+  .argument('<project-name>', 'The name of project ')
+  .option('-t, --template <template-name>', 'The project template to use. ex: dino-framework@1.0.0', 'dino-framework')
+  .option('-f, --force', 'Overwrite target directory if it exists', false)
+  .option('-n, --no-git', 'Skip git initialization', false)
+  .description('create a spring/vue3 project') //
+  .action((what: 'spring' | 'vue3', projectName: string, options: { template: string; force: boolean; noGit: boolean }) => {
+    genProject(what, projectName)
+  })
+
+program //
   .command('code') //
-  .addArgument(new Argument('<type>', '"spring" or "vue" code').choices(['spring','vue']))
-  .argument('<schema-file...>', 'module schema file')
-  .option('-f, --force', 'force overwrite the exists file', false)
-  .description('generate "spring" or "vue" code from schema') //
-  .action((type: string, files: string[], options: {force:boolean}) => {
-    code(type,files, options.force)
+  .argument('<module...>', "Module names. '*' for all")
+  .option('-f, --force', 'Overwrite the target file if it exists', false)
+  .description('generate "spring" or "vue3" code from schema') //
+  .action((modules: string[], options: { force: boolean }) => {
+    code(modules, options.force)
   })
 
 // output help information on unknown commands
