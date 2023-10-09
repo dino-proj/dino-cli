@@ -1,13 +1,7 @@
-# 🦖 Dino Cli
 <div align="center">
-<div><img src="./.assert/intro.svg" width="100%" /></div>
-
-<hr height="1" style="height: 1px; border-width: 0px 0 0 0 !important;"/>
-
-Dino Cli 用于代码生成 · 工程创建。
+  <div><img src="./.assert/intro.svg" style="max-height:300px"  /></div>
 </div>
 
----
 
 ## 介绍
   Dino Cli是基于Node.js开发的命令行工具，用于帮助更快的完成基于Dino Spring和Dino Vue3前后端开发。

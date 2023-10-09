@@ -1,4 +1,4 @@
-<svg fill="none" width="600" height="320" xmlns="http://www.w3.org/2000/svg">
+<svg fill="none" width="600" height="300" xmlns="http://www.w3.org/2000/svg">
   <foreignObject width="100%" height="100%">
     <div xmlns="http://www.w3.org/1999/xhtml">
       <style>
@@ -6,7 +6,7 @@
           background-color: transparent;
 
           width: 100%;
-          height: 320px;
+          height: 300px;
 
           display: flex;
           flex-direction: column;
@@ -114,7 +114,7 @@
             flex-grow: 1;
             order: 2;
             margin: 20px;
-            height: 320px;
+            height: 300px;
           }
         }
 
@@ -139,7 +139,7 @@
             justify-content: center;
             align-items: center;
             width: 260px;
-            height: 320px;
+            height: 300px;
             transform: translate(-32px, -32px)
           }
         }
@@ -190,8 +190,8 @@
 
         @media (min-width: 960px) {
           .logo .logo-img {
-            max-width: 160px;
-            max-height: 160px
+            max-width: 150px;
+            max-height: 150px
           }
         }
       </style>
