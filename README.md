@@ -1,7 +1,5 @@
 # 🦖 Dino Cli
 <div align="center">
-<a href="https://dinodev.cn"><img src="./.assert/logo.svg" width="76" height="60" alt="icon"/></a>
-
 <div><img src="./.assert/intro.svg" width="600px" /></div>
 
 <hr height="1" style="height: 1px; border-width: 0px 0 0 0 !important;"/>
