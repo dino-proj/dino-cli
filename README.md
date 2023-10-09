@@ -1,6 +1,6 @@
 # 🦖 Dino Cli
 <div align="center">
-<div><img src="./.assert/intro.svg" width="600px" /></div>
+<div><img src="./.assert/intro.svg" width="100%" /></div>
 
 <hr height="1" style="height: 1px; border-width: 0px 0 0 0 !important;"/>
 
